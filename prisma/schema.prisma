@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("USER") // "USER" or "ADMIN"
+  tools     Tool[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tool {
+  id              String   @id @default(cuid())
+  name            String
+  category        String
+  description     String
+  longDescription String?
+  url             String
+  githubUrl       String?
+  tags            String   // Stored as comma-separated string
+  logo            String?  // URL or Base64
+  image           String?  // URL or Base64
+  features        String?  // Stored as comma-separated
+  pricing         String?
+  rating          Float?
+  approved        Boolean  @default(false)
+  rejectionReason String?
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
