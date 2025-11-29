@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenAlt 🚀
 
-## Getting Started
+**OpenAlt** is a modern, community-driven platform designed to help developers and creators discover the best open-source alternatives to popular proprietary software. Built with performance and aesthetics in mind, it features a sleek dark-mode UI, real-time search, and a robust submission system.
 
-First, run the development server:
+![OpenAlt Preview](https://via.placeholder.com/1200x600.png?text=OpenAlt+Preview+Image)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🔍 Discovery & Search
+- **Curated Directory:** Explore a wide range of open-source tools across categories like AI, Dev Tools, Audio/Video, and more.
+- **Smart Filtering:** Instantly filter tools by category or search by keywords, tags, and descriptions.
+- **Detailed Views:** View comprehensive details for each tool, including features, pricing models, and direct links to repositories.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 👥 Community Driven
+- **User Accounts:** Secure sign-up and login functionality to join the community.
+- **Submit Tools:** Users can contribute to the directory by submitting new open-source tools.
+- **Status Tracking:** Track the approval status of your submissions directly from your dashboard.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🛡️ Admin & Moderation
+- **Admin Dashboard:** A powerful dashboard for administrators to manage the platform.
+- **Approval Workflow:** Review pending submissions, approve high-quality tools, or reject with feedback.
+- **User Management:** Monitor user activity and manage the platform's content.
 
-## Learn More
+### 🎨 Modern UI/UX
+- **Premium Design:** Features a stunning dark mode with Aurora background effects and glassmorphism.
+- **Smooth Animations:** Powered by Framer Motion for a fluid and responsive user experience.
+- **Responsive:** Fully optimized for all devices, from desktops to mobile phones.
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Database:** [SQLite](https://www.sqlite.org/) with [Prisma ORM](https://www.prisma.io/)
+- **Authentication:** [NextAuth.js](https://next-auth.js.org/)
+- **Animations:** [Framer Motion](https://www.framer.com/motion/)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Getting Started
 
-## Deploy on Vercel
+Follow these steps to run the project locally:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/vivekisadev/OpenAlt.git
+    cd OpenAlt
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up the database:**
+    ```bash
+    npx prisma generate
+    npx prisma db push
+    npx prisma db seed # Optional: Seed with initial data
+    ```
+
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+
+5.  **Open your browser:**
+    Navigate to `http://localhost:3000` to see the app in action.
+
+## 🤝 Contributing
+
+Contributions are welcome! If you'd like to improve OpenAlt, please follow these steps:
+
+1.  Fork the repository.
+2.  Create a new branch (`git checkout -b feature/YourFeature`).
+3.  Commit your changes (`git commit -m 'Add some feature'`).
+4.  Push to the branch (`git push origin feature/YourFeature`).
+5.  Open a Pull Request.
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+Made with ❤️ by [Vivek](https://github.com/vivekisadev)
