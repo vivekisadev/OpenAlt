@@ -1,0 +1,21 @@
+export const CATEGORIES = [
+    "Image Generation",
+    "Video Creation",
+    "Audio & Speech",
+    "Chatbots",
+    "Coding Tools",
+    "3D Modeling",
+    "Automation",
+    "Productivity",
+    "Social Media",
+    "Marketing",
+    "Analytics",
+    "Design",
+    "Writing",
+    "Education",
+    "Security",
+    "DevOps",
+    "Database",
+    "Web Dev",
+    "Open Source"
+];
