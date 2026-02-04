@@ -1,6 +1,6 @@
-# OpenAlt 🚀
+# OpenAlt 🚀 (Community Edition)
 
-**OpenAlt** is a modern, community-driven platform designed to help developers and creators discover the best open-source alternatives to popular proprietary software. Built with performance and aesthetics in mind, it features a sleek dark-mode UI, real-time search, and a robust submission system.
+**OpenAlt** is a modern, community-driven platform designed to help developers and creators Discover and share the best open-source alternatives to popular proprietary software. Built with performance and aesthetics in mind, it features a sleek dark-mode UI, real-time search, and a robust submission system.
 
 ![OpenAlt Preview](https://via.placeholder.com/1200x600.png?text=OpenAlt+Preview+Image)
 
