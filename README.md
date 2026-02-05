@@ -83,3 +83,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 Made with ❤️ by [Vivek](https://github.com/vivekisadev)
              
+
+## 🌟 Acknowledgements
+
+Special thanks to the open-source community for their invaluable contributions.
