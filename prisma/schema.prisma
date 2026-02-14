@@ -18,6 +18,7 @@ model User {
   name      String?
   role      String   @default("USER") // "USER" or "ADMIN"
   tools     Tool[]
+  reports   Report[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -34,12 +35,30 @@ model Tool {
   logo            String?  // URL or Base64
   image           String?  // URL or Base64
   features        String?  // Stored as comma-separated
+  paidAlternative String?
   pricing         String?
   rating          Float?
   approved        Boolean  @default(false)
   rejectionReason String?
   userId          String?
   user            User?    @relation(fields: [userId], references: [id])
+  reports         Report[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  toolId      String
+  tool        Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  userName    String?  // Store name if user is not logged in or for reference
+  userEmail   String?  // Optional email for contact
+  reason      String   // What's wrong with the tool
+  description String   // Detailed description
+  status      String   @default("PENDING") // "PENDING", "REVIEWED", "RESOLVED", "DISMISSED"
+  adminNotes  String?  // Admin can add notes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

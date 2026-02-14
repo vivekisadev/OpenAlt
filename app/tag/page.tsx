@@ -1,18 +1,36 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useAlternatives } from "@/context/AlternativesContext";
 import AlternativeCard from "@/components/AlternativeCard";
-import Modal from "@/components/Modal";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Dropdown from "@/components/Dropdown";
+import DirectorySkeleton from "@/components/DirectorySkeleton";
 
 export default function TagsPage() {
-    const { alternatives } = useAlternatives();
+    const { alternatives, loading } = useAlternatives();
     const [selectedTag, setSelectedTag] = useState("All");
     const [sortBy, setSortBy] = useState("time-desc");
-    const [selectedAlt, setSelectedAlt] = useState<typeof alternatives[0] | null>(null);
+
+    // Pagination
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 9;
+    const isFirstRun = useRef(true);
+
+    // Scroll to top
+    useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [page]);
+
+    // Reset pagination
+    useEffect(() => {
+        setPage(1);
+    }, [selectedTag, sortBy]);
 
     // Extract all unique tags
     const allTags = useMemo(() => {
@@ -56,6 +74,14 @@ export default function TagsPage() {
         return result;
     }, [alternatives, selectedTag, sortBy]);
 
+    // Pagination Slice
+    const paginatedTools = useMemo(() => {
+        const startIndex = (page - 1) * PAGE_SIZE;
+        return filteredTools.slice(startIndex, startIndex + PAGE_SIZE);
+    }, [filteredTools, page]);
+
+    const totalPages = Math.ceil(filteredTools.length / PAGE_SIZE);
+
     const sortOptions = [
         { label: "Sort by Time (Newest)", value: "time-desc" },
         { label: "Sort by Time (Oldest)", value: "time-asc" },
@@ -91,8 +117,8 @@ export default function TagsPage() {
                             TAG
                         </p>
                         <h1 className={`font-bold text-white mb-8 ${selectedTag === "All"
-                                ? "text-4xl md:text-5xl"
-                                : "text-2xl md:text-3xl"
+                            ? "text-4xl md:text-5xl"
+                            : "text-2xl md:text-3xl"
                             }`}>
                             {selectedTag === "All" ? "Explore by tags" : `#${selectedTag}`}
                         </h1>
@@ -105,8 +131,8 @@ export default function TagsPage() {
                             <button
                                 onClick={() => setSelectedTag("All")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${selectedTag === "All"
-                                        ? "bg-indigo-600 text-white"
-                                        : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
+                                    ? "bg-indigo-600 text-white"
+                                    : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
                                     }`}
                             >
                                 All
@@ -116,8 +142,8 @@ export default function TagsPage() {
                                     key={tag}
                                     onClick={() => setSelectedTag(tag)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${selectedTag === tag
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
+                                        ? "bg-indigo-600 text-white"
+                                        : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
                                         }`}
                                 >
                                     {tag}
@@ -136,19 +162,57 @@ export default function TagsPage() {
                     </div>
 
                     {/* Tools Grid - Using AlternativeCard */}
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {filteredTools.map((tool, index) => (
-                            <AlternativeCard
-                                key={tool.id}
-                                alternative={tool}
-                                index={index}
-                                onClick={() => setSelectedAlt(tool)}
-                            />
-                        ))}
-                    </div>
+                    {loading ? (
+                        <DirectorySkeleton />
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-8">
+                            {paginatedTools.map((tool, index) => (
+                                <AlternativeCard
+                                    key={tool.id}
+                                    alternative={tool}
+                                    index={index}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {!loading && totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-4 mt-12 mb-8">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                            >
+                                <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Previous
+                            </button>
+
+                            <div className="flex items-center gap-2">
+                                <span className="text-gray-400 text-sm font-medium">Page</span>
+                                <span className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 font-bold text-white shadow-inner">
+                                    {page}
+                                </span>
+                                <span className="text-gray-400 text-sm font-medium">of {totalPages}</span>
+                            </div>
+
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                            >
+                                Next
+                                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
 
                     {/* Empty State */}
-                    {filteredTools.length === 0 && alternatives.length > 0 && (
+                    {!loading && filteredTools.length === 0 && alternatives.length > 0 && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -171,18 +235,8 @@ export default function TagsPage() {
                             </button>
                         </motion.div>
                     )}
-
-                    {/* Loading State */}
-                    {alternatives.length === 0 && (
-                        <div className="flex items-center justify-center py-20">
-                            <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-                        </div>
-                    )}
                 </div>
             </main>
-
-            {/* Detail Modal */}
-            <Modal isOpen={!!selectedAlt} onClose={() => setSelectedAlt(null)} item={selectedAlt} />
         </div>
     );
 }

@@ -24,26 +24,29 @@ export default function Hero() {
             </motion.div>
 
             {/* Main Title */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                className="max-w-5xl mx-auto"
-            >
-                <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-white mb-6 leading-[0.9]">
-                    Open Source <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-x">
-                        Revolution.
-                    </span>
-                </h1>
-            </motion.div>
+            <div className="relative">
+                <div className="absolute inset-0 bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none" />
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    className="max-w-5xl mx-auto relative z-10"
+                >
+                    <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-white mb-6 leading-[0.9]">
+                        Open Source <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 animate-gradient-x pb-4">
+                            Revolution.
+                        </span>
+                    </h1>
+                </motion.div>
+            </div>
 
             {/* Subtitle */}
             <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10"
+                className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10 relative z-10"
             >
                 Ditch the monthly subscriptions. Discover powerful, community-driven alternatives to the SaaS tools you use every day.
             </motion.p>
@@ -53,17 +56,19 @@ export default function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col sm:flex-row items-center gap-4"
+                className="flex flex-col sm:flex-row items-center gap-4 relative z-10"
             >
                 <Link
-                    href="/search"
-                    className="px-8 py-4 rounded-full bg-white text-black font-bold text-lg hover:bg-gray-200 transition-all transform hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+                    href="#directory"
+                    className="px-8 py-4 rounded-full bg-white text-black font-bold text-lg hover:bg-gray-200 transition-all transform hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)]"
+                    data-cursor-text="EXPLORE"
                 >
                     Explore Directory
                 </Link>
                 <Link
                     href="/submit"
                     className="px-8 py-4 rounded-full bg-white/5 text-white font-medium text-lg border border-white/10 hover:bg-white/10 transition-all backdrop-blur-md"
+                    data-cursor-text="SUBMIT"
                 >
                     Submit a Tool
                 </Link>

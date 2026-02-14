@@ -1,235 +1,326 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import AlternativeCard from "@/components/AlternativeCard";
-import Modal from "@/components/Modal";
 import { useAlternatives } from "@/context/AlternativesContext";
 import { CATEGORIES } from "@/data/categories";
+import DirectorySkeleton from "@/components/DirectorySkeleton";
+import Dropdown from "@/components/Dropdown";
+import PaidAlternativeDropdown from "@/components/PaidAlternativeDropdown";
 
 function SearchPageContent() {
-    const { alternatives } = useAlternatives();
+    const { alternatives, loading } = useAlternatives();
     const searchParams = useSearchParams();
-    const [query, setQuery] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("All Categories");
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [selectedAlt, setSelectedAlt] = useState<any | null>(null);
-    const [categorySearchQuery, setCategorySearchQuery] = useState("");
-    const dropdownRef = useRef<HTMLDivElement>(null);
 
+    // Main Search
+    const [query, setQuery] = useState("");
+
+    // Filters
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterAlternative, setFilterAlternative] = useState("");
+    const [filterCategory, setFilterCategory] = useState("All");
+    const [filterStack, setFilterStack] = useState("All");
+    const [filterLicense, setFilterLicense] = useState("All");
+    const [sortBy, setSortBy] = useState("time-desc"); // "relevance" or "time-desc"
+
+    // Pagination
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 9;
+    const isFirstRun = useRef(true);
+
+    // Scroll to top on page change
+    useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [page]);
+
+    // Reset pagination on filter change
+    useEffect(() => {
+        setPage(1);
+    }, [query, filterAlternative, filterCategory, filterStack, filterLicense, sortBy]);
+
+    // Initial Params
     useEffect(() => {
         const q = searchParams.get("q");
-        const cat = searchParams.get("category");
-
+        const category = searchParams.get("category");
         if (q) setQuery(q);
-        if (cat && CATEGORIES.includes(cat)) setSelectedCategory(cat);
+        if (category && CATEGORIES.includes(category)) {
+            setFilterCategory(category);
+            setShowFilters(true);
+        }
     }, [searchParams]);
 
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsDropdownOpen(false);
+    // Extract Options
+    const { allTags, allPrices, allPaidAlternatives } = useMemo(() => {
+        const tags = new Set<string>();
+        const prices = new Set<string>();
+        const paidAlts = new Set<string>();
+
+        alternatives.forEach(alt => {
+            alt.tags?.forEach(t => tags.add(t));
+            if (alt.pricing) prices.add(alt.pricing);
+            if (alt.paidAlternative) {
+                // Split comma-separated alternatives
+                alt.paidAlternative.split(',').forEach(p => {
+                    const trimmed = p.trim();
+                    if (trimmed) paidAlts.add(trimmed);
+                });
             }
-        };
+        });
 
-        if (isDropdownOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
+        return {
+            allTags: Array.from(tags).sort(),
+            allPrices: Array.from(prices).sort(),
+            allPaidAlternatives: Array.from(paidAlts).sort()
         };
-    }, [isDropdownOpen]);
+    }, [alternatives]);
 
     const filtered = useMemo(() => {
         let result = alternatives;
 
-        // Filter by Category
-        if (selectedCategory !== "All Categories") {
-            result = result.filter((a) =>
-                a.category.toLowerCase() === selectedCategory.toLowerCase() ||
-                a.tags?.some(tag => tag.toLowerCase() === selectedCategory.toLowerCase())
-            );
-        }
-
-        // Filter by Query
+        // 1. Text Search (Main Query) - Global
         if (query) {
             const lowerQuery = query.toLowerCase();
             result = result.filter((a) =>
                 a.name.toLowerCase().includes(lowerQuery) ||
                 a.description.toLowerCase().includes(lowerQuery) ||
-                (a.tags && a.tags.some(tag => tag.toLowerCase().includes(lowerQuery)))
+                (a.tags && a.tags.some(tag => tag.toLowerCase().includes(lowerQuery))) ||
+                a.category.toLowerCase().includes(lowerQuery)
             );
         }
 
-        return result;
-    }, [query, selectedCategory, alternatives]);
-
-    const filteredCategories = useMemo(() => {
-        if (!categorySearchQuery) {
-            return ["All Categories", ...CATEGORIES];
+        // 2. Specific Filters
+        if (filterAlternative) {
+            const lowerAlt = filterAlternative.toLowerCase();
+            result = result.filter(a =>
+                (a.paidAlternative && a.paidAlternative.toLowerCase().includes(lowerAlt))
+            );
         }
-        const lowerQuery = categorySearchQuery.toLowerCase();
-        return ["All Categories", ...CATEGORIES].filter(cat =>
-            cat.toLowerCase().includes(lowerQuery)
-        );
-    }, [categorySearchQuery]);
+
+        if (filterCategory !== "All") {
+            result = result.filter(a => a.category === filterCategory);
+        }
+
+        if (filterStack !== "All") {
+            result = result.filter(a => a.tags?.includes(filterStack));
+        }
+
+        if (filterLicense !== "All") {
+            result = result.filter(a => a.pricing === filterLicense);
+        }
+
+        // Sorting
+        if (sortBy === "time-desc") {
+            result = [...result].sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateB - dateA;
+            });
+        }
+
+        return result;
+    }, [query, filterAlternative, filterCategory, filterStack, filterLicense, sortBy, alternatives]);
+
+    const paginatedFiltered = useMemo(() => {
+        const startIndex = (page - 1) * PAGE_SIZE;
+        return filtered.slice(startIndex, startIndex + PAGE_SIZE);
+    }, [filtered, page]);
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 
     return (
-        <div className="min-h-screen font-sans selection:bg-indigo-500/30 relative cursor-none">
+        <div className="min-h-screen font-sans selection:bg-indigo-500/30 relative">
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-32">
 
-                {/* Search Section */}
-                <div className="max-w-3xl mx-auto mb-12">
-
-                    {/* Search Input with Integrated Category Dropdown */}
-                    <div className="flex items-center gap-3 relative z-40">
-                        {/* Search Bar */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="relative group flex-1"
-                        >
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
-                            <div className="relative flex items-center bg-[#0a0a0a] rounded-full border border-white/10 shadow-2xl">
-                                <div className="pl-6 text-gray-400">
+                {/* Search & Filter Header */}
+                <div className="flex flex-col gap-6 mb-12 relative z-30">
+                    {/* Top Row: Search | Filters | Sort */}
+                    <div className="flex flex-col md:flex-row gap-4 items-end md:items-center">
+                        <div className="relative flex-1 w-full">
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-600/20 rounded-xl blur-md opacity-50" />
+                            <div className="relative flex items-center bg-[#0a0a0a] rounded-xl border border-white/10 shadow-lg overflow-hidden group focus-within:border-indigo-500/50 transition-colors">
+                                <div className="pl-4 text-gray-500">
                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
                                 </div>
                                 <input
-                                    autoFocus
                                     type="text"
-                                    placeholder={`Search in ${selectedCategory === "All Categories" ? "all tools" : selectedCategory}...`}
-                                    className="w-full bg-transparent border-none px-4 py-4 text-lg text-white placeholder-gray-600 focus:outline-none focus:ring-0"
+                                    placeholder="Search tools..."
+                                    className="w-full bg-transparent border-none px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-0"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                 />
                                 {query && (
-                                    <button
-                                        onClick={() => setQuery("")}
-                                        className="pr-6 text-gray-500 hover:text-white transition-colors"
-                                    >
+                                    <button onClick={() => setQuery("")} className="pr-4 text-gray-500 hover:text-white">
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
                                 )}
                             </div>
-                        </motion.div>
+                        </div>
 
-                        {/* Compact Category Dropdown */}
-                        <div className="relative" ref={dropdownRef}>
+                        <div className="flex gap-2 w-full md:w-auto">
                             <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="flex items-center gap-2 px-4 py-4 bg-[#1a1a1a]/80 backdrop-blur-md border border-white/10 rounded-full text-sm font-medium transition-all hover:bg-white/5 hover:border-white/20 shadow-xl group whitespace-nowrap"
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={`flex items-center gap-2 px-5 py-3.5 rounded-xl border font-medium transition-all ${showFilters
+                                    ? "bg-indigo-600 text-white border-indigo-500"
+                                    : "bg-[#0a0a0a] text-gray-400 border-white/10 hover:bg-white/5 hover:text-white"
+                                    }`}
                             >
-                                <svg className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                                 </svg>
-                                <span className="text-gray-300 group-hover:text-white transition-colors">
-                                    {selectedCategory === "All Categories" ? "Filter" : selectedCategory}
-                                </span>
-                                <svg
-                                    className={`w-3 h-3 text-gray-500 transition-transform duration-300 group-hover:text-white ${isDropdownOpen ? "rotate-180" : ""}`}
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
+                                Filters
                             </button>
 
-                            {isDropdownOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="absolute top-full right-0 mt-2 w-72 max-h-[400px] overflow-hidden bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl flex flex-col"
-                                >
-                                    {/* Category Searcher */}
-                                    <div className="p-3 border-b border-white/5 bg-[#1a1a1a] sticky top-0 z-10">
-                                        <div className="relative">
-                                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                            </svg>
-                                            <input
-                                                type="text"
-                                                placeholder="Find a category..."
-                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors"
-                                                onClick={(e) => e.stopPropagation()}
-                                                value={categorySearchQuery}
-                                                onChange={(e) => setCategorySearchQuery(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent p-2">
-                                        {filteredCategories.map((cat) => (
-                                            <button
-                                                key={cat}
-                                                onClick={() => {
-                                                    setSelectedCategory(cat);
-                                                    setIsDropdownOpen(false);
-                                                    setCategorySearchQuery("");
-                                                }}
-                                                className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between group ${selectedCategory === cat
-                                                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20"
-                                                    : "text-gray-400 hover:bg-white/5 hover:text-white"
-                                                    }`}
-                                            >
-                                                <span>{cat}</span>
-                                                {selectedCategory === cat && (
-                                                    <motion.svg
-                                                        initial={{ scale: 0 }}
-                                                        animate={{ scale: 1 }}
-                                                        className="w-4 h-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </motion.svg>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
+                            <div className="w-40">
+                                <Dropdown
+                                    value={sortBy}
+                                    onChange={setSortBy}
+                                    options={[
+                                        { label: "Newest", value: "time-desc" },
+                                        { label: "Oldest", value: "time-asc" },
+                                        { label: "A-Z", value: "name-asc" },
+                                        { label: "Z-A", value: "name-desc" }
+                                    ]}
+                                    placeholder="Sort by"
+                                />
+                            </div>
                         </div>
                     </div>
 
+                    {/* Filter Grid */}
+                    <AnimatePresence>
+                        {showFilters && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0, overflow: "hidden" }}
+                                animate={{ height: "auto", opacity: 1, transitionEnd: { overflow: "visible" } }}
+                                exit={{ height: 0, opacity: 0, overflow: "hidden" }}
+                                className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+                            >
+                                {/* Alternative Search */}
+                                <div>
+
+                                    <PaidAlternativeDropdown
+                                        value={filterAlternative}
+                                        onChange={setFilterAlternative}
+                                        options={allPaidAlternatives}
+                                    />
+                                </div>
+
+                                {/* Category */}
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">Search category</label>
+                                    <Dropdown
+                                        value={filterCategory}
+                                        onChange={setFilterCategory}
+                                        options={[
+                                            { label: "All Categories", value: "All" },
+                                            ...CATEGORIES.map(c => ({ label: c, value: c }))
+                                        ]}
+                                    />
+                                </div>
+
+                                {/* Stack */}
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">Search stack</label>
+                                    <Dropdown
+                                        value={filterStack}
+                                        onChange={setFilterStack}
+                                        options={[
+                                            { label: "All Stacks", value: "All" },
+                                            ...allTags.map(t => ({ label: t, value: t }))
+                                        ]}
+                                    />
+                                </div>
+
+                                {/* License */}
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">Search license</label>
+                                    <Dropdown
+                                        value={filterLicense}
+                                        onChange={setFilterLicense}
+                                        options={[
+                                            { label: "All Licenses", value: "All" },
+                                            ...allPrices.map(p => ({ label: p || "Unknown", value: p || "Unknown" }))
+                                        ]}
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Results */}
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-8">
-                    {filtered.map((alt, index) => (
-                        <AlternativeCard
-                            key={alt.id}
-                            alternative={alt}
-                            index={index}
-                            disableAnimation={true}
-                            onClick={() => setSelectedAlt(alt)}
-                        />
-                    ))}
-                </div>
+                {loading ? (
+                    <DirectorySkeleton />
+                ) : (
+                    <>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:gap-5">
+                            {paginatedFiltered.map((alt, index) => (
+                                <AlternativeCard
+                                    key={alt.id}
+                                    alternative={alt}
+                                    index={index}
+                                    disableAnimation={true}
+                                />
+                            ))}
+                        </div>
 
-                {query && filtered.length === 0 && (
+                        {/* Pagination Controls */}
+                        {!loading && totalPages > 1 && (
+                            <div className="flex justify-center items-center gap-4 mt-12 mb-8">
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                    className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                                >
+                                    <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                    Previous
+                                </button>
+
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-400 text-sm font-medium">Page</span>
+                                    <span className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 font-bold text-white shadow-inner">
+                                        {page}
+                                    </span>
+                                    <span className="text-gray-400 text-sm font-medium">of {totalPages}</span>
+                                </div>
+
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={page === totalPages}
+                                    className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                                >
+                                    Next
+                                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
+
+
+                {!loading && query && filtered.length === 0 && (
                     <div className="text-center py-20">
                         <p className="text-gray-400 text-lg">No results found for &quot;{query}&quot;</p>
                     </div>
                 )}
             </div>
 
-            <Modal
-                isOpen={!!selectedAlt}
-                onClose={() => setSelectedAlt(null)}
-                item={selectedAlt}
-            />
-        </div>
+
+        </div >
     );
 }
 

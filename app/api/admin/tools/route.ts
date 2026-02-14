@@ -6,10 +6,8 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        console.log("Admin API Session:", JSON.stringify(session, null, 2));
 
         if (!session || session.user.role !== 'ADMIN') {
-            console.log("Unauthorized access attempt. Role:", (session?.user as any)?.role);
             return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
         }
 

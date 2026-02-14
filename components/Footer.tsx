@@ -14,6 +14,7 @@ export default function Footer() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="group relative inline-flex items-center gap-1 text-white font-medium"
+                            data-cursor-text="CREATOR"
                         >
                             <span className="relative">
                                 Vivek Verma

@@ -1,66 +1,59 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default function PageTransition({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    // Stagger animation for the 5 columns
-    const shuffleTransition = {
-        initial: {
-            height: '100%',
-        },
-        animate: (i: number) => ({
-            height: '0%',
-            transition: {
-                duration: 0.8,
-                ease: [0.22, 1, 0.36, 1], // Custom bezier for premium feel
-                delay: i * 0.05, // Stagger effect
-            },
-        }),
-    };
+export default function PageTransition({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const [progress, setProgress] = useState(0);
 
-    // Content fade-in animation
-    const contentTransition = {
-        initial: { opacity: 0, y: 20 },
-        animate: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                delay: 0.3, // Wait for shutters to start opening
-                duration: 0.5,
-                ease: 'easeOut',
-            },
-        },
-    };
+    // Simulate a loading bar on route change
+    useEffect(() => {
+        // Start progress
+        setProgress(30);
+
+        // Trickle
+        const timer1 = setTimeout(() => setProgress(70), 200);
+        const timer2 = setTimeout(() => setProgress(100), 500);
+
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+        };
+    }, [pathname]);
 
     return (
-        <>
-            <div className="fixed inset-0 z-[100] pointer-events-none flex flex-col md:flex-row h-screen w-screen">
-                {[...Array(5)].map((_, i) => (
-                    <motion.div
-                        key={i}
-                        custom={i}
-                        variants={shuffleTransition}
-                        initial="initial"
-                        animate="animate"
-                        exit="initial"
-                        className="w-full h-full bg-neutral-900 border-r border-neutral-800 last:border-r-0"
-                        style={{ transformOrigin: 'top' }}
-                    />
-                ))}
+        <div className="min-h-screen bg-[#050608] text-white w-full relative selection:bg-indigo-500/30">
+            {/* Top Loading Bar */}
+            <div className="fixed top-0 left-0 right-0 h-[2px] z-[100] pointer-events-none">
+                <motion.div
+                    initial={{ width: "0%", opacity: 1 }}
+                    animate={{
+                        width: `${progress}%`,
+                        opacity: progress === 100 ? 0 : 1
+                    }}
+                    transition={{
+                        width: { duration: 0.4, ease: "easeOut" },
+                        opacity: { duration: 0.3, delay: 0.2 }
+                    }}
+                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+                />
             </div>
 
+            {/* Content Fade In (No Exit Animation to prevent scroll jumping) */}
             <motion.div
-                variants={contentTransition}
-                initial="initial"
-                animate="animate"
-                className="w-full"
+                key={pathname}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                    duration: 0.5,
+                    ease: "easeOut",
+                }}
+                className="w-full min-h-screen flex flex-col"
             >
                 {children}
             </motion.div>
-        </>
+        </div>
     );
 }

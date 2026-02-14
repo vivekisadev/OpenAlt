@@ -14,6 +14,7 @@ export interface Alternative {
     image?: string; // Main desktop screenshot
     tags?: string[];
     features?: string[];
+    paidAlternative?: string;
     pricing?: string;
     rating?: number;
     createdAt?: string;
@@ -38,9 +39,10 @@ export function AlternativesProvider({ children }: { children: ReactNode }) {
                 const res = await fetch("/api/tools");
                 if (res.ok) {
                     const dbTools = await res.json();
+                    console.log("Fetched tools:", dbTools.length, dbTools);
                     setAlternatives(dbTools);
                 } else {
-                    console.error("Failed to fetch tools");
+                    console.error("Failed to fetch tools", res.status);
                     setAlternatives([]);
                 }
             } catch (error) {
@@ -76,11 +78,15 @@ export function AlternativesProvider({ children }: { children: ReactNode }) {
                 };
                 // Replace optimistic item with real item (correct ID)
                 setAlternatives((prev) => prev.map(p => p.id === alt.id ? formattedTool : p));
+            } else {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to save tool");
             }
         } catch (error) {
             console.error("Failed to save tool", error);
-            // Rollback?
+            // Rollback optimistic update
             setAlternatives((prev) => prev.filter(p => p.id !== alt.id));
+            throw error; // Re-throw to be caught by the UI
         }
     };
 

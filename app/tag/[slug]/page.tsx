@@ -4,14 +4,34 @@ import { useParams } from "next/navigation";
 import { useAlternatives } from "@/context/AlternativesContext";
 import AlternativeCard from "@/components/AlternativeCard";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import DirectorySkeleton from "@/components/DirectorySkeleton";
 
 export default function TagSlugPage() {
     const params = useParams();
-    const { alternatives } = useAlternatives();
+    const { alternatives, loading } = useAlternatives();
     const [sortBy, setSortBy] = useState("time-desc");
 
+    // Pagination
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 9;
+    const isFirstRun = useRef(true);
+
+    // Scroll to top
+    useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [page]);
+
     const tagName = decodeURIComponent(params.slug as string);
+
+    // Reset pagination
+    useEffect(() => {
+        setPage(1);
+    }, [tagName, sortBy]);
 
     // Get all tags
     const allTags = useMemo(() => {
@@ -52,6 +72,14 @@ export default function TagSlugPage() {
 
         return result;
     }, [alternatives, tagName, sortBy]);
+
+    // Pagination Slice
+    const paginatedTools = useMemo(() => {
+        const startIndex = (page - 1) * PAGE_SIZE;
+        return filteredTools.slice(startIndex, startIndex + PAGE_SIZE);
+    }, [filteredTools, page]);
+
+    const totalPages = Math.ceil(filteredTools.length / PAGE_SIZE);
 
     return (
         <div className="min-h-screen relative">
@@ -101,8 +129,8 @@ export default function TagSlugPage() {
                                     key={tag}
                                     href={`/tag/${encodeURIComponent(tag)}`}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${tagName === tag
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
+                                        ? "bg-indigo-600 text-white"
+                                        : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
                                         }`}
                                 >
                                     {tag}
@@ -126,18 +154,57 @@ export default function TagSlugPage() {
                     </div>
 
                     {/* Tools Grid */}
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {filteredTools.map((tool, index) => (
-                            <AlternativeCard
-                                key={tool.id}
-                                alternative={tool}
-                                index={index}
-                            />
-                        ))}
-                    </div>
+                    {loading ? (
+                        <DirectorySkeleton />
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-8">
+                            {paginatedTools.map((tool, index) => (
+                                <AlternativeCard
+                                    key={tool.id}
+                                    alternative={tool}
+                                    index={index}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {!loading && totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-4 mt-12 mb-8">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                            >
+                                <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Previous
+                            </button>
+
+                            <div className="flex items-center gap-2">
+                                <span className="text-gray-400 text-sm font-medium">Page</span>
+                                <span className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 font-bold text-white shadow-inner">
+                                    {page}
+                                </span>
+                                <span className="text-gray-400 text-sm font-medium">of {totalPages}</span>
+                            </div>
+
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                            >
+                                Next
+                                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
 
                     {/* Empty State */}
-                    {filteredTools.length === 0 && (
+                    {!loading && filteredTools.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
                                 <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -17,6 +17,8 @@ export async function fetchGitHubStats(githubUrl: string): Promise<{
     forks: number;
     issues: number;
     lastUpdated: string;
+    lastPush: string;
+    createdAt: string;
 } | null> {
     const repoInfo = extractGitHubRepo(githubUrl);
     if (!repoInfo) return null;
@@ -41,6 +43,8 @@ export async function fetchGitHubStats(githubUrl: string): Promise<{
             forks: data.forks_count || 0,
             issues: data.open_issues_count || 0,
             lastUpdated: data.updated_at || '',
+            lastPush: data.pushed_at || '',
+            createdAt: data.created_at || '',
         };
     } catch (error) {
         console.error('Failed to fetch GitHub stats:', error);

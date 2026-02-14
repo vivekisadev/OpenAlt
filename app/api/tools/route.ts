@@ -2,9 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { submitToolSchema } from "@/lib/validations";
+import { globalRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
     try {
+        // Rate Limiting
+        const ip = req.headers.get("x-forwarded-for") || "unknown";
+        if (!globalRateLimiter.check(ip)) {
+            return NextResponse.json(
+                { message: "Too many requests, please try again later." },
+                { status: 429 }
+            );
+        }
+
         const session = await getServerSession(authOptions);
 
         if (!session || !session.user) {
@@ -12,6 +23,16 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
+
+        // Validate Input
+        const validation = submitToolSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json(
+                { message: validation.error.issues[0].message },
+                { status: 400 }
+            );
+        }
+
         const {
             name,
             category,
@@ -23,22 +44,41 @@ export async function POST(req: Request) {
             logo,
             image,
             features,
-            pricing
-        } = body;
+            pricing,
+            paidAlternative
+        } = validation.data;
+
+        // Check for duplicate URL
+        const existingTool = await prisma.tool.findFirst({
+            where: {
+                url: {
+                    equals: url,
+                    mode: "insensitive", // Case-insensitive check
+                }
+            }
+        });
+
+        if (existingTool) {
+            return NextResponse.json(
+                { message: "A tool with this URL already exists." },
+                { status: 409 }
+            );
+        }
 
         const tool = await prisma.tool.create({
             data: {
                 name,
                 category,
                 description,
-                longDescription,
+                longDescription: longDescription || description,
                 url,
                 githubUrl,
-                tags: Array.isArray(tags) ? tags.join(",") : tags,
+                tags: Array.isArray(tags) ? tags.join(",") : (tags || ""),
                 logo: logo || "https://via.placeholder.com/150",
-                image,
-                features: Array.isArray(features) ? features.join(",") : features,
+                image: image || "",
+                features: Array.isArray(features) ? features.join(",") : (features || ""),
                 pricing,
+                paidAlternative,
                 approved: false,
                 userId: session.user.id,
             },
@@ -70,6 +110,7 @@ export async function GET() {
                 logo: true,
                 features: true,
                 pricing: true,
+                paidAlternative: true,
                 rating: true,
                 approved: true,
                 createdAt: true,
@@ -77,7 +118,7 @@ export async function GET() {
                 userId: true,
                 rejectionReason: true,
                 longDescription: true,
-                // Exclude image for performance
+                image: true
             }
         });
 
@@ -90,7 +131,7 @@ export async function GET() {
 
         return NextResponse.json(formattedTools);
     } catch (error) {
-        console.error("Error creating tool:", error);
+        console.error("Error fetching tools:", error);
         return NextResponse.json(
             { message: "Internal server error" },
             { status: 500 }

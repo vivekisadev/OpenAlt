@@ -1,27 +1,49 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
+import PremiumButton from "./PremiumButton"; // Preserve this component
+import SettingsModal from "./SettingsModal";
+import Tooltip from "./Tooltip";
 
 export const Header = () => {
     const { data: session } = useSession();
     const [isScrolled, setIsScrolled] = useState(false);
-    const [stars, setStars] = useState<number | null>(128); // Demo value: 128 stars
+    const [stars, setStars] = useState<number | null>(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const pathname = usePathname();
 
-    // GitHub repo URL
-    const githubRepo = "https://github.com/vivekisadev/opensource";
+    const githubRepo = "https://github.com/vivekisadev/OpenAlt";
 
+    // Handle scroll
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
+            // Use a slightly larger threshold for smoothness
+            setIsScrolled(window.scrollY > 30);
         };
+        handleScroll(); // Check on mount
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    // Fetch GitHub stars
+    useEffect(() => {
+        fetch("https://api.github.com/repos/vivekisadev/OpenAlt")
+            .then(res => res.json())
+            .then(data => {
+                if (data.stargazers_count) setStars(data.stargazers_count);
+            })
+            .catch(err => console.error("Failed to fetch stars", err));
+    }, []);
+
+    // Handle page changes if needed (optional cleanup)
+    useEffect(() => {
+        // Any reset logic
+    }, [pathname]);
 
     const navLinks = [
         { name: "Search", href: "/search" },
@@ -34,126 +56,154 @@ export const Header = () => {
         navLinks.push({ name: "Dashboard", href: "/dashboard" });
     }
 
+    // Determine width and styles based on state
+    const getWidth = () => {
+        if (isScrolled) return "fit-content"; // Shrink to content (pill)
+        return "min(90%, 1280px)"; // Full width (with constraint)
+    };
+
+    // We'll use a fixed max-width constraint for the pill to ensure it doesn't get too small or weird
+    // Using simple conditional classes for layout wrapper
+
     return (
         <motion.header
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 transition-all duration-300 ${isScrolled ? "py-4" : "py-6"
-                }`}
+            className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-300 pointer-events-none ${isScrolled ? "pt-4" : "pt-6"}`}
         >
             <motion.div
+                layout // Enable smooth layout animation (FLIP) for width/padding changes
+                initial={false}
+                style={{
+                    width: isScrolled ? "fit-content" : "min(90%, 1000px)", // Controlled by style+layout
+                    padding: isScrolled ? "0.5rem 1.25rem" : "0.75rem 2rem",
+                    gap: isScrolled ? "1.5rem" : "0rem",
+                    pointerEvents: "auto"
+                }}
                 animate={{
-                    width: isScrolled ? "60%" : "100%",
-                    opacity: isScrolled ? 0.95 : 1
+                    backgroundColor: isScrolled ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.2)",
+                    borderColor: "rgba(255,255,255,0.1)",
                 }}
                 transition={{
-                    duration: 0.8,
-                    ease: "easeInOut"
+                    duration: 1.0, // Slower, premium speed
+                    ease: [0.16, 1, 0.3, 1],
+                    layout: { duration: 1.0, ease: [0.16, 1, 0.3, 1] } // Specific layout transition
                 }}
-                className="max-w-7xl bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl shadow-black/50 px-6 py-3 flex items-center justify-between transition-all duration-300"
+                className={`
+                    flex items-center
+                    backdrop-blur-xl
+                    border
+                    rounded-full
+                    shadow-lg
+                    mx-4
+                    justify-between
+                `}
+            // Note: Changing justify-between to justify-center via class might jump.
+            // But if width shrinks to fit-content, it effectively centers. 
+            // We'll keep 'justify-between' for consistent layout logic inside, 
+            // but since width is 'fit-content' on scroll, space-between has no space to distribute :)
             >
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 group">
-                    <span className="text-green-500 font-bold text-xl">/</span>
-                    <span className="text-lg font-bold text-white tracking-tight">
-                        OpenAlt
-                    </span>
-                </Link>
+                {/* Logo Section */}
+                <motion.div
+                    className="flex items-center shrink-0"
+                    animate={{
+                        scale: 1,
+                        rotate: 0
+                    }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                >
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <span className="text-green-500 font-bold text-xl">/</span>
+                        <span className="font-bold text-xl tracking-tight text-white hidden sm:block transition-opacity opacity-100">
+                            OpenAlt
+                        </span>
+                    </Link>
+                </motion.div>
 
                 {/* Nav Links */}
-                <nav className="hidden md:flex items-center gap-8">
+                <motion.div className="flex items-center gap-1 sm:gap-2">
                     {navLinks.map((link) => (
                         <Link
                             key={link.name}
                             href={link.href}
-                            className={`text-sm font-medium transition-colors ${pathname === link.href
-                                ? "text-white"
-                                : "text-gray-400 hover:text-white"
-                                }`}
+                            className={`
+                                relative px-3 py-1.5 text-sm font-medium transition-colors rounded-full
+                                ${pathname === link.href ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5"}
+                            `}
                         >
                             {link.name}
                         </Link>
                     ))}
-                </nav>
+                </motion.div>
 
-                {/* Right Side Actions */}
-                <div className="flex items-center gap-3">
-                    {/* GitHub Button */}
-                    <a
-                        href={githubRepo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-full border border-white/5 transition-all hover:scale-105"
-                    >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                        </svg>
-                        <span>Star</span>
-                        <span className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full text-xs">
-                            <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                {/* Right Actions */}
+                <motion.div className="flex items-center gap-3 whitespace-nowrap shrink-0">
+                    {/* GitHub Star Badge (Premium) */}
+                    <Tooltip content="Star on Github">
+                        <a
+                            href={githubRepo}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 pl-2 pr-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-full transition-all group relative overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                            <svg className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.337-3.369-1.337-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z" />
                             </svg>
-                            {stars !== null ? stars.toLocaleString() : "0"}
-                        </span>
-                    </a>
+                            <div className="w-px h-3 bg-white/10" />
+                            <div className="flex items-center gap-1">
+                                <span className="text-xs font-semibold text-gray-300 group-hover:text-white transition-colors tabular-nums">
+                                    {stars ? stars.toLocaleString() : "..."}
+                                </span>
+                            </div>
+                        </a>
+                    </Tooltip>
 
-                    {/* Submit Button */}
-                    <Link
-                        href="/submit"
-                        className="flex items-center gap-2 px-5 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-full border border-white/5 transition-all hover:scale-105"
-                    >
-                        <span>{session ? "Submit Tool" : "Submit"}</span>
-                    </Link>
+                    {/* Premium/Dashboard Button */}
+                    <div className="hidden sm:block">
+                        {session ? (
+                            <div className="relative group">
+                                <Link href="/dashboard" className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold ring-1 ring-white/20 relative z-10">
+                                    {session.user?.name?.[0]?.toUpperCase() || "U"}
+                                </Link>
 
-                    {/* User Menu */}
-                    {session && (
-                        <div className="relative group">
-                            <button className="group flex items-center gap-3 px-2 py-1 rounded-full hover:bg-white/5 transition-all duration-300">
-                                {session.user.role === 'ADMIN' && (
-                                    <span className="hidden md:block px-3 py-1 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-[10px] font-semibold text-indigo-300 shadow-sm tracking-wider uppercase">
-                                        Admin
-                                    </span>
-                                )}
-                                <div className="relative">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-inner border border-white/10">
-                                        {session.user?.name?.[0]?.toUpperCase() || "U"}
+                                {/* Dropdown Menu */}
+                                <div className="absolute right-0 top-full pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right translate-y-2 group-hover:translate-y-0">
+                                    <div className="bg-[#0a0a0c] border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-xl">
+                                        <div className="px-4 py-3 border-b border-white/5">
+                                            <p className="text-xs text-gray-400">Signed in as</p>
+                                            <p className="text-sm font-medium text-white truncate">{session.user?.name || "User"}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setIsSettingsOpen(true)}
+                                            className="block w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                                        >
+                                            Settings
+                                        </button>
+                                        <button
+                                            onClick={() => signOut()}
+                                            className="block w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 hover:text-red-300 transition-colors"
+                                        >
+                                            Logout
+                                        </button>
                                     </div>
                                 </div>
-                            </button>
-
-                            {/* Dropdown */}
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50">
-                                <div className="p-3 border-b border-white/5">
-                                    <p className="text-sm font-medium text-white truncate">{session.user?.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{session.user?.email}</p>
-                                </div>
-                                <div className="p-1">
-                                    <Link
-                                        href="/settings"
-                                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        Settings
-                                    </Link>
-                                    <button
-                                        onClick={() => import("next-auth/react").then(mod => mod.signOut())}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors text-left"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                        </svg>
-                                        Sign Out
-                                    </button>
-                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        ) : (
+                            <Tooltip content="Sign in to your account">
+                                <PremiumButton
+                                    label="Sign In"
+                                    size="sm"
+                                    onClick={() => signIn()}
+                                />
+                            </Tooltip>
+                        )}
+                    </div>
+                </motion.div>
             </motion.div>
+
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+            />
         </motion.header>
     );
 };
