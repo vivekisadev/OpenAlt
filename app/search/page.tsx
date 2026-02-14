@@ -27,7 +27,7 @@ function SearchPageContent() {
 
     // Pagination
     const [page, setPage] = useState(1);
-    const PAGE_SIZE = 9;
+    const PAGE_SIZE = 15;
     const isFirstRun = useRef(true);
 
     // Scroll to top on page change

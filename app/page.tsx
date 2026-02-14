@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link"; // Added Link
 import AlternativeCard from "@/components/AlternativeCard";
 import Hero from "@/components/Hero";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,31 +19,13 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300); // 300ms debounce
 
-  // Pagination state (Standard Pagination)
+  // Limit items for Landing Page
   const PAGE_SIZE = 15;
-  const [page, setPage] = useState(1);
-  const isFirstRun = useRef(true);
-
-  // Scroll to top of directory on page change
-  useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
-      return;
-    }
-
-    const directory = document.getElementById("directory");
-    if (directory) {
-      // Offset for header (approx 100px)
-      const y = directory.getBoundingClientRect().top + window.scrollY - 100;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  }, [page]);
 
   type Alt = typeof alternatives[0];
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    setPage(1); // Reset pagination on search change
   }, []);
 
   // Optimized filtering usage memo
@@ -60,13 +43,10 @@ export default function Home() {
     });
   }, [debouncedSearch, alternatives]);
 
-  // Slice for pagination (Show ONLY current page items)
+  // Slice for Landing Page (Show ONLY first page items)
   const paginatedItems = useMemo(() => {
-    const startIndex = (page - 1) * PAGE_SIZE;
-    return filtered.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [filtered, page]);
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    return filtered.slice(0, PAGE_SIZE);
+  }, [filtered]);
 
   // Infinite scroll removed for standard pagination
 
@@ -129,38 +109,17 @@ export default function Home() {
             </AnimatePresence>
           </div>
 
-          {/* Pagination Controls - Premium UI */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-12 mb-8">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
+          {filtered.length > PAGE_SIZE && (
+            <div className="flex justify-center mt-12 mb-8">
+              <Link
+                href="/search"
+                className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 hover:border-indigo-500/30 transition-all flex items-center gap-2 group"
               >
-                <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <span>Explore All Tools</span>
+                <svg className="w-5 h-5 text-gray-400 group-hover:text-indigo-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
-                Previous
-              </button>
-
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400 text-sm font-medium">Page</span>
-                <span className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 font-bold text-white shadow-inner">
-                  {page}
-                </span>
-                <span className="text-gray-400 text-sm font-medium">of {totalPages}</span>
-              </div>
-
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors flex items-center gap-2 group"
-              >
-                Next
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+              </Link>
             </div>
           )}
 
