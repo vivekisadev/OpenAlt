@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   keywords: ["Open Source", "Free Software", "AI Tools", "SaaS Alternatives", "Self-hosted", "Developer Tools", "Free AI", "OpenAI Alternatives", "Midjourney Alternatives"],
   authors: [{ name: "OpenAlt Team" }],
   creator: "OpenAlt",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
