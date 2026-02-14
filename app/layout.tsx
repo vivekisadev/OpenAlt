@@ -9,6 +9,7 @@ import { Providers } from "@/components/Providers";
 import Footer from "@/components/Footer";
 import GitHubStarPopup from "@/components/GitHubStarPopup";
 import FeaturedToolPopup from "@/components/FeaturedToolPopup";
+import SmoothScroll from "@/components/SmoothScroll";
 
 // Load Inter font
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -59,15 +60,17 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased bg-[#030014] text-white selection:bg-indigo-500/30 cursor-auto">
         <Providers>
-          <AlternativesProvider>
-            <CustomCursor />
-            <Background />
-            <Header />
-            {children}
-            <Footer />
-            <GitHubStarPopup />
-            <FeaturedToolPopup />
-          </AlternativesProvider>
+          <SmoothScroll>
+            <AlternativesProvider>
+              <CustomCursor />
+              <Background />
+              <Header />
+              {children}
+              <Footer />
+              <GitHubStarPopup />
+              <FeaturedToolPopup />
+            </AlternativesProvider>
+          </SmoothScroll>
         </Providers>
       </body>
     </html>
