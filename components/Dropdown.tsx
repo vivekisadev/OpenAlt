@@ -16,11 +16,16 @@ interface DropdownProps {
     className?: string;
 }
 
-export default function Dropdown({ value, onChange, options, placeholder = "Select...", className = "" }: DropdownProps) {
+export default function Dropdown({ value, onChange, options, placeholder = "Select...", className = "", searchable = false }: DropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
 
     const selectedOption = options.find(opt => opt.value === value);
+
+    const filteredOptions = options.filter(opt =>
+        !searchable || opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -31,6 +36,11 @@ export default function Dropdown({ value, onChange, options, placeholder = "Sele
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    // Reset search when closing
+    useEffect(() => {
+        if (!isOpen) setSearchQuery("");
+    }, [isOpen]);
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
@@ -61,29 +71,54 @@ export default function Dropdown({ value, onChange, options, placeholder = "Sele
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.1 }}
-                        className="absolute z-50 mt-2 w-full rounded-xl bg-[#1a1a1a] border border-white/10 shadow-2xl shadow-black/50 max-h-60 overflow-auto focus:outline-none py-1 backdrop-blur-xl"
+                        className="absolute z-50 mt-2 w-full rounded-xl bg-[#1a1a1a] border border-white/10 shadow-2xl shadow-black/50 overflow-hidden focus:outline-none backdrop-blur-xl"
                     >
-                        {options.map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => {
-                                    onChange(option.value);
-                                    setIsOpen(false);
-                                }}
-                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${option.value === value
-                                        ? "bg-indigo-600/20 text-indigo-400"
-                                        : "text-gray-300 hover:bg-white/5 hover:text-white"
-                                    }`}
-                            >
-                                <span>{option.label}</span>
-                                {option.value === value && (
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        {searchable && (
+                            <div className="p-2 border-b border-white/5 bg-[#1a1a1a]">
+                                <div className="relative">
+                                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                                )}
-                            </button>
-                        ))}
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search..."
+                                        className="w-full bg-white/5 border border-white/5 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:bg-white/10 focus:border-indigo-500/30 transition-all font-medium"
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        <div className="max-h-60 overflow-auto py-1 premium-scrollbar" data-lenis-prevent="true">
+                            {filteredOptions.length > 0 ? (
+                                filteredOptions.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => {
+                                            onChange(option.value);
+                                            setIsOpen(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${option.value === value
+                                                ? "bg-indigo-600/20 text-indigo-400"
+                                                : "text-gray-300 hover:bg-white/5 hover:text-white"
+                                            }`}
+                                    >
+                                        <span>{option.label}</span>
+                                        {option.value === value && (
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                    No results found
+                                </div>
+                            )}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

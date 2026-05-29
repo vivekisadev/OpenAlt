@@ -111,18 +111,7 @@ export default function TagsPage() {
                         )}
                     </nav>
 
-                    {/* Header */}
-                    <div className="text-center mb-12">
-                        <p className="text-indigo-400 text-sm font-semibold uppercase tracking-wider mb-2">
-                            TAG
-                        </p>
-                        <h1 className={`font-bold text-white mb-8 ${selectedTag === "All"
-                            ? "text-4xl md:text-5xl"
-                            : "text-2xl md:text-3xl"
-                            }`}>
-                            {selectedTag === "All" ? "Explore by tags" : `#${selectedTag}`}
-                        </h1>
-                    </div>
+
 
                     {/* Filter System */}
                     <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 mb-12 shadow-2xl">
@@ -135,6 +124,7 @@ export default function TagsPage() {
                                 <Dropdown
                                     value={selectedTag}
                                     onChange={setSelectedTag}
+                                    searchable={true}
                                     options={[
                                         { label: "All Tags", value: "All" },
                                         ...allTags.map(t => ({ label: t, value: t }))

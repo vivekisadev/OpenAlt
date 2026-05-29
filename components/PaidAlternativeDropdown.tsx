@@ -135,7 +135,7 @@ export default function PaidAlternativeDropdown({
                         </div>
 
                         {/* Options List */}
-                        <div className="max-h-60 overflow-y-auto px-2 py-2 premium-scrollbar">
+                        <div className="max-h-60 overflow-y-auto px-2 py-2 premium-scrollbar" data-lenis-prevent="true">
                             <button
                                 onClick={() => { onChange(""); setIsOpen(false); }}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all mb-1 group ${value === ""

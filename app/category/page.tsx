@@ -114,18 +114,7 @@ export default function CategoryPage() {
                         )}
                     </nav>
 
-                    {/* Header */}
-                    <div className="text-center mb-12">
-                        <p className="text-indigo-400 text-sm font-semibold uppercase tracking-wider mb-2">
-                            CATEGORY
-                        </p>
-                        <h1 className={`font-bold text-white mb-8 ${selectedCategory === "All"
-                            ? "text-4xl md:text-5xl"
-                            : "text-2xl md:text-3xl"
-                            }`}>
-                            {selectedCategory === "All" ? "Explore by categories" : selectedCategory}
-                        </h1>
-                    </div>
+
 
                     {/* Filter System */}
                     <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 mb-12 shadow-2xl">
@@ -138,6 +127,7 @@ export default function CategoryPage() {
                                 <Dropdown
                                     value={selectedCategory}
                                     onChange={setSelectedCategory}
+                                    searchable={true}
                                     options={[
                                         { label: "All Categories", value: "All" },
                                         ...allCategories.map(c => ({ label: c, value: c }))
