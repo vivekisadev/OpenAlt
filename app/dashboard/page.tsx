@@ -222,7 +222,7 @@ export default function DashboardPage() {
 
     if (!session) {
         return (
-            <div className="min-h-screen bg-[#030014] flex flex-col items-center justify-center text-white gap-6 relative overflow-hidden">
+            <div className="min-h-screen bg-[#030014] flex flex-col items-center justify-center text-white gap-6 relative overflow-x-clip">
                 <div className="absolute top-0 left-0 w-full h-96 bg-indigo-600/10 blur-[100px] pointer-events-none" />
                 <h1 className="text-3xl font-bold tracking-tight">Access Restricted</h1>
                 <p className="text-gray-400 max-w-md text-center">You need to be logged in to manage your tools and view analytics.</p>

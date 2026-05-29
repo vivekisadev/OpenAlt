@@ -61,7 +61,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="font-sans antialiased bg-[#030014] text-white selection:bg-indigo-500/30 cursor-auto">
+      <body className="font-sans antialiased bg-black text-white selection:bg-indigo-500/30 cursor-auto">
         <Providers>
           <SmoothScroll>
             <AlternativesProvider>

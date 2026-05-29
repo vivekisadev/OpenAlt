@@ -70,22 +70,23 @@ export const Header = () => {
             className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-300 pointer-events-none ${isScrolled ? "pt-4" : "pt-6"}`}
         >
             <motion.div
-                layout // Enable smooth layout animation (FLIP) for width/padding changes
                 initial={false}
+                animate={{
+                    width: isScrolled ? "750px" : "1100px",
+                    maxWidth: "92%",
+                    padding: isScrolled ? "0.5rem 1.25rem" : "0.875rem 2rem",
+                    gap: isScrolled ? "0.5rem" : "0rem",
+                    backgroundColor: isScrolled ? "rgba(10,10,10,0.8)" : "rgba(0,0,0,0.2)",
+                    borderColor: isScrolled ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
+                }}
                 style={{
-                    width: isScrolled ? "fit-content" : "min(90%, 1000px)", // Controlled by style+layout
-                    padding: isScrolled ? "0.5rem 1.25rem" : "0.75rem 2rem",
-                    gap: isScrolled ? "1.5rem" : "0rem",
                     pointerEvents: "auto"
                 }}
-                animate={{
-                    backgroundColor: isScrolled ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.2)",
-                    borderColor: "rgba(255,255,255,0.1)",
-                }}
                 transition={{
-                    duration: 1.0, // Slower, premium speed
-                    ease: [0.16, 1, 0.3, 1],
-                    layout: { duration: 1.0, ease: [0.16, 1, 0.3, 1] } // Specific layout transition
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 35,
+                    mass: 0.8,
                 }}
                 className={`
                     flex items-center

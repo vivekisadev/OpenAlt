@@ -25,7 +25,7 @@ export default function Hero() {
 
             {/* Main Title */}
             <div className="relative">
-                <div className="absolute inset-0 bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none" />
+
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

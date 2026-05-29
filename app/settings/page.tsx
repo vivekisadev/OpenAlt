@@ -62,7 +62,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#030014] text-white pt-32 pb-20 px-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[#030014] text-white pt-32 pb-20 px-4 relative overflow-x-clip">
             {/* Background Ambience */}
             <div className="fixed top-0 left-0 w-full h-[500px] bg-indigo-600/10 blur-[130px] pointer-events-none" />
 

@@ -124,40 +124,36 @@ export default function TagsPage() {
                         </h1>
                     </div>
 
-                    {/* Tags and Sort */}
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12">
-                        {/* Tag Buttons */}
-                        <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl">
-                            <button
-                                onClick={() => setSelectedTag("All")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${selectedTag === "All"
-                                    ? "bg-indigo-600 text-white"
-                                    : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
-                                    }`}
-                            >
-                                All
-                            </button>
-                            {allTags.slice(0, 15).map((tag) => (
-                                <button
-                                    key={tag}
-                                    onClick={() => setSelectedTag(tag)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${selectedTag === tag
-                                        ? "bg-indigo-600 text-white"
-                                        : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
-                                        }`}
-                                >
-                                    {tag}
-                                </button>
-                            ))}
-                        </div>
+                    {/* Filter System */}
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-4 mb-12 shadow-2xl">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            {/* Tag Dropdown */}
+                            <div className="flex-1">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
+                                    Select Tag
+                                </label>
+                                <Dropdown
+                                    value={selectedTag}
+                                    onChange={setSelectedTag}
+                                    options={[
+                                        { label: "All Tags", value: "All" },
+                                        ...allTags.map(t => ({ label: t, value: t }))
+                                    ]}
+                                    placeholder="Select Tag"
+                                />
+                            </div>
 
-                        {/* Sort Dropdown */}
-                        <div className="flex items-center gap-2 flex-shrink-0 w-full md:w-64">
-                            <Dropdown
-                                value={sortBy}
-                                onChange={setSortBy}
-                                options={sortOptions}
-                            />
+                            {/* Sort Dropdown */}
+                            <div className="w-full md:w-64">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
+                                    Sort Results
+                                </label>
+                                <Dropdown
+                                    value={sortBy}
+                                    onChange={setSortBy}
+                                    options={sortOptions}
+                                />
+                            </div>
                         </div>
                     </div>
 

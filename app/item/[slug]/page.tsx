@@ -152,7 +152,7 @@ export default function ItemPage() {
 
     if (!item) {
         return (
-            <div className="min-h-screen bg-[#030014] relative flex items-center justify-center">
+            <div className="min-h-screen bg-black relative flex items-center justify-center">
                 <div className="text-center space-y-6">
                     <h1 className="text-4xl font-bold text-white mb-4">Tool not found</h1>
                     <Link href="/" className="text-indigo-400 hover:text-indigo-300">
@@ -164,20 +164,8 @@ export default function ItemPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#050608] text-white pt-32 pb-20">
-            {/* Ambient Background - Breathing */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <motion.div
-                    animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-indigo-900/10 blur-[120px] rounded-full mix-blend-screen"
-                />
-                <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute bottom-[-20%] right-[-20%] w-[70%] h-[70%] bg-purple-900/10 blur-[120px] rounded-full mix-blend-screen"
-                />
-            </div>
+        <div className="min-h-screen bg-black text-white pt-32 pb-20 overflow-x-clip">
+            {/* Ambient Background removed for pure black styling */}
 
             {/* Scroll Progress Bar */}
             <motion.div

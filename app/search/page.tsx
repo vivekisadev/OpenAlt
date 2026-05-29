@@ -121,6 +121,16 @@ function SearchPageContent() {
                 const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
                 return dateB - dateA;
             });
+        } else if (sortBy === "time-asc") {
+            result = [...result].sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateA - dateB;
+            });
+        } else if (sortBy === "name-asc") {
+            result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === "name-desc") {
+            result = [...result].sort((a, b) => b.name.localeCompare(a.name));
         }
 
         return result;
@@ -200,9 +210,9 @@ function SearchPageContent() {
                     <AnimatePresence>
                         {showFilters && (
                             <motion.div
-                                initial={{ height: 0, opacity: 0, overflow: "hidden" }}
-                                animate={{ height: "auto", opacity: 1, transitionEnd: { overflow: "visible" } }}
-                                exit={{ height: 0, opacity: 0, overflow: "hidden" }}
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
                                 className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
                             >
                                 {/* Alternative Search */}

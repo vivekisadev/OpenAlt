@@ -51,24 +51,12 @@ export default function Home() {
   // Infinite scroll removed for standard pagination
 
   return (
-    <div className="min-h-screen bg-[#050608] text-white relative overflow-hidden">
-      {/* Ambient Background */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-indigo-900/10 blur-[120px] rounded-full mix-blend-screen"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-[-20%] right-[-20%] w-[70%] h-[70%] bg-purple-900/10 blur-[120px] rounded-full mix-blend-screen"
-        />
-      </div>
+    <div className="min-h-screen bg-black text-white relative overflow-x-clip">
+      {/* Ambient Background removed for pure black styling */}
 
       <WelcomePopup />
       <main className="relative z-10">
-        <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none -z-10 mix-blend-screen" />
+
         <Hero />
 
         {/* Search Input - Enhanced */}

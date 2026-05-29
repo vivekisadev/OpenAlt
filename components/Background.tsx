@@ -5,16 +5,8 @@ import Aurora from "./Aurora";
 
 function Background() {
     return (
-        <div className="fixed inset-0 z-0 pointer-events-none bg-[#030014] overflow-hidden">
-            {/* Aurora WebGL Effect */}
-            <div className="absolute inset-0 w-full h-full opacity-40">
-                <Aurora
-                    colorStops={['#4F46E5', '#9333EA', '#EC4899']} // Indigo -> Purple -> Pink
-                    amplitude={1.2}
-                    blend={0.6}
-                    speed={0.5}
-                />
-            </div>
+        <div className="fixed inset-0 z-0 pointer-events-none bg-black overflow-hidden">
+            {/* Aurora WebGL Effect removed for pure black styling */}
 
             {/* Noise Texture Overlay for subtle grain */}
             <div
