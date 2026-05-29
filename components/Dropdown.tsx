@@ -14,6 +14,7 @@ interface DropdownProps {
     options: Option[];
     placeholder?: string;
     className?: string;
+    searchable?: boolean;
 }
 
 export default function Dropdown({ value, onChange, options, placeholder = "Select...", className = "", searchable = false }: DropdownProps) {
